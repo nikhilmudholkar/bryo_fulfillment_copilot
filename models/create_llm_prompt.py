@@ -56,7 +56,7 @@ def convert_dataframe_to_string(df):
 
 
 def create_llm_message(df_sale_order, df_ordered_products, df_fulfillment, df_stock_movements, df_back_orders):
-    print("Creating LLm message...")
+    # print("Creating LLm message...")
     df_sale_order_string = convert_dataframe_to_string(df_sale_order)
 
     df_ordered_products_string = convert_dataframe_to_string(df_ordered_products)
@@ -79,7 +79,7 @@ def create_llm_message(df_sale_order, df_ordered_products, df_fulfillment, df_st
     message_string += df_stock_movements_string + "\n"
     message_string += "5. <back order> table:\n"
     message_string += df_back_orders_string + "\n"
-    print(message_string)
+    # print(message_string)
 
     return message_string
 
@@ -97,7 +97,7 @@ def askai(df_sale_order, df_ordered_products, df_fulfillment, df_stock_movements
         url, data=json.dumps(payload),
         headers={'Content-Type': 'application/json'}
     )
-    print(response_palm.text)
+    # print(response_palm.text)
     response_palm = response_palm.text
-    print(response_palm)
+    # print(response_palm)
     return response_palm

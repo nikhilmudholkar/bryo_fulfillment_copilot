@@ -9,7 +9,7 @@ class SaleOrder(models.Model):
     _name = "bryo.copilot"
     _description = "Bryo fulfillment copilot"
     # _inherit = "res.partner"
-    print("********************************")
+    # print("********************************")
 
     # GetSaleOrderId()
     # description_sale = fields.Text('Sales Description')
@@ -72,21 +72,21 @@ class SaleOrder(models.Model):
             headers={'Content-Type': 'application/json'}
         )
         response_llama = response_llama.json()
-        print(response_llama["choices"][0]["text"])
+        # print(response_llama["choices"][0]["text"])
 
         url_slack = "https://hooks.slack.com/services/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"
             # payload for slack webhook endpoint to send messages to a channel
         slack_data = {'text': str(response_llama["choices"][0]["text"])}
 
-        print(slack_data)
+        # print(slack_data)
         # print(response_llama.text)
-        print(type(slack_data))
+        # print(type(slack_data))
         # print(str(response_llama.text))
         response = requests.post(
             url_slack, data=json.dumps(slack_data),
             headers={'Content-Type': 'application/json'}
         )
-        print(response.text)
+        # print(response.text)
     #
     # @api.model
     # def init(self):

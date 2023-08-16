@@ -12,9 +12,9 @@ class CopilotSuggestionsView(models.Model):
     @api.model
     def init(self):
         if tools.table_exists(self._cr, "copilot_suggestions"):
-            print("table copilot_suggestions_view exists")
+            # print("table copilot_suggestions_view exists")
             self._cr.execute("""DROP TABLE copilot_suggestions CASCADE""")
-            print("table copilot_suggestions_view dropped")
+            # print("table copilot_suggestions_view dropped")
         # create table copilot_suggestions_view
         self._cr.execute("""CREATE TABLE copilot_suggestions (
                     id serial NOT NULL,

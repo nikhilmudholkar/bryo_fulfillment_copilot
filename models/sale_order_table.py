@@ -18,8 +18,8 @@ class OpenSaleOrderView(models.Model):
     # sale_order_id = fields.Float(string='Sale Order ID')
     # order_name = fields.
     time_to_deliver = fields.Char(string='time_to_deliver')
-    time_to_create_delivery_order = fields.Char(string='time_to_create_delivery_order')
-    time_to_pick = fields.Char(string='time_to_pick')
+    # time_to_create_delivery_order = fields.Char(string='time_to_create_delivery_order')
+    # time_to_pick = fields.Char(string='time_to_pick')
 
 
     # @api.model
@@ -41,7 +41,7 @@ class OpenSaleOrderView(models.Model):
         result = self._cr.fetchall()
         columns = [desc[0] for desc in self._cr.description]
         df_table1 = pd.DataFrame(result, columns=columns)
-        print(df_table1)
+        # print(df_table1)
 
 
         # table 2
@@ -54,11 +54,11 @@ class OpenSaleOrderView(models.Model):
                 ON sale_order.id = sale_order_line.order_id
                 where sale_order.state = 'sale' 
         """)
-        print("table 2 query executed")
+        # print("table 2 query executed")
         result = self._cr.fetchall()
         columns = [desc[0] for desc in self._cr.description]
         df_table2 = pd.DataFrame(result, columns=columns)
-        print(df_table2)
+        # print(df_table2)
 
         # if tools.table_exists(self._cr, "ordered_products"):
         #     print("table exists")
@@ -86,11 +86,11 @@ class OpenSaleOrderView(models.Model):
             inner join stock_picking
             ON sale_order.id = stock_picking.sale_id
 """)
-        print("table 4 query executed")
+        # print("table 4 query executed")
         result = self._cr.fetchall()
         columns = [desc[0] for desc in self._cr.description]
         df_table4 = pd.DataFrame(result, columns=columns)
-        print(df_table4.columns)
+        # print(df_table4.columns)
 
         
 
@@ -112,139 +112,138 @@ class OpenSaleOrderView(models.Model):
             else:
                 # if all the stock_picking.id related to the order have a date_done, then set the date_done to max(date_done)
                 df_table4.loc[df_table4['sale_order'] == order, 'delivered_date'] = df_table4[df_table4['delivery_id'].isin(stock_picking_ids)]['delivered_date'].max()
-        print("*****************")
-        print(df_table4)
 
         # df_table4_max_dates = df_table4.groupby('order').agg({'date_done': 'max'}).reset_index()
 
-        # do the same thing as above for create_date and append the new column to df_table4_max_dates
-        df_table4['create_date'] = df_table4.groupby('sale_order').agg({'create_date': 'max'}).reset_index()[
-            'create_date']
+        # # do the same thing as above for create_date and append the new column to df_table4_max_dates
+        # df_table4['create_date'] = df_table4.groupby('sale_order').agg({'create_date': 'max'}).reset_index()[
+        #     'create_date']
 
         # now for every order in table 4, get the corresponding ordered_date from table 1 and calculate difference between date_done and ordered_date
         df_table_merged = df_table4.merge(df_table1, on='sale_order', how='left')
         df_table_merged['time_to_deliver'] = df_table_merged['delivered_date'] - df_table_merged['ordered_date']
         # if all stock_picking.id related to the order have a date_done, then MAX(DATE_DONE), otherwise current date)
 
-        df_table_merged['time_to_create_delivery_order'] = df_table_merged['create_date'] - df_table_merged[
-            'ordered_date']
+        # df_table_merged['time_to_create_delivery_order'] = df_table_merged['create_date'] - df_table_merged[
+        #     'ordered_date']
 
 
-        # table 5
-        self._cr.execute("""
-                        select sale_order.name as sale_order,
-                    table_1.state,
-                    table_1.stock_movement_id,
-                    table_1.backorder_id,
-                    table_1.product_id,
-                    table_1.product_uom_qty,
-                    table_1.reserved_uom_qty,
-                    table_1.qty_done,
-                    table_1.write_date,
-                    table_1.location_id
-                FROM sale_order
-                inner join (
-                    SELECT sale_id,
-                            backorder_id,
-                            table_1a.state,
-                            table_1a.product_id,
-                            table_1a.stock_movement_id,
-                            table_1a.reserved_uom_qty,
-                            table_1a.location_id,
-                            table_1a.product_uom_qty,
-                            table_1a.write_date,
-                            table_1a.qty_done
-                        FROM stock_picking
-                        inner join (
-                            SELECT stock_move.picking_id,
-                                    stock_move.state,
-                                    stock_move.product_id, 	
-                                    stock_move_line.id as stock_movement_id,
-                                    stock_move_line.reserved_uom_qty,
-                                    stock_move_line.location_id,
-                                    stock_move.product_uom_qty,
-                                    stock_move_line.write_date,
-                                    stock_move_line.qty_done
-                                FROM stock_move
-                                inner join stock_move_line
-                                ON stock_move.id = stock_move_line.move_id)
-                                AS table_1a
-                        ON stock_picking.id = table_1a.picking_id )
-                        AS table_1
-                ON sale_order.id = table_1.sale_id
-                where sale_order.state = 'sale'
-                    """)
-        # print("table 5 query executed")
-        result = self._cr.fetchall()
-        columns = [desc[0] for desc in self._cr.description]
-        df_table5 = pd.DataFrame(result, columns=columns)
-
-        # filter table 5 to only get records where state = 'done'
-        df_table5 = df_table5[df_table5['state'] == 'done']
-        # for a unique order, get all the rows with same order in table 5 and get the maximum write_date timestamp amongst those
-        df_table5_max_dates = df_table5.groupby('sale_order').agg({'write_date': 'max'}).reset_index()
-        # print(df_table5_max_dates)
-
-        # for every order in df_table5_max_dates, get the corresponding create_date from df_table_merged and calculate difference between write_date and create_date
-        df_table_merged = df_table_merged.merge(df_table5_max_dates, on='sale_order', how='left')
-        df_table_merged['time_to_pick'] = df_table_merged['write_date'] - df_table_merged['create_date']
+        # # table 5
+        # self._cr.execute("""
+        #                 select sale_order.name as sale_order,
+        #             table_1.state,
+        #             table_1.stock_movement_id,
+        #             table_1.backorder_id,
+        #             table_1.product_id,
+        #             table_1.product_uom_qty,
+        #             table_1.reserved_uom_qty,
+        #             table_1.qty_done,
+        #             table_1.write_date,
+        #             table_1.location_id
+        #         FROM sale_order
+        #         inner join (
+        #             SELECT sale_id,
+        #                     backorder_id,
+        #                     table_1a.state,
+        #                     table_1a.product_id,
+        #                     table_1a.stock_movement_id,
+        #                     table_1a.reserved_uom_qty,
+        #                     table_1a.location_id,
+        #                     table_1a.product_uom_qty,
+        #                     table_1a.write_date,
+        #                     table_1a.qty_done
+        #                 FROM stock_picking
+        #                 inner join (
+        #                     SELECT stock_move.picking_id,
+        #                             stock_move.state,
+        #                             stock_move.product_id,
+        #                             stock_move_line.id as stock_movement_id,
+        #                             stock_move_line.reserved_uom_qty,
+        #                             stock_move_line.location_id,
+        #                             stock_move.product_uom_qty,
+        #                             stock_move_line.write_date,
+        #                             stock_move_line.qty_done
+        #                         FROM stock_move
+        #                         inner join stock_move_line
+        #                         ON stock_move.id = stock_move_line.move_id)
+        #                         AS table_1a
+        #                 ON stock_picking.id = table_1a.picking_id )
+        #                 AS table_1
+        #         ON sale_order.id = table_1.sale_id
+        #         where sale_order.state = 'sale'
+        #             """)
+        # # print("table 5 query executed")
+        # result = self._cr.fetchall()
+        # columns = [desc[0] for desc in self._cr.description]
+        # df_table5 = pd.DataFrame(result, columns=columns)
+        #
+        # # filter table 5 to only get records where state = 'done'
+        # df_table5 = df_table5[df_table5['state'] == 'done']
+        # # for a unique order, get all the rows with same order in table 5 and get the maximum write_date timestamp amongst those
+        # df_table5_max_dates = df_table5.groupby('sale_order').agg({'write_date': 'max'}).reset_index()
+        # # print(df_table5_max_dates)
+        #
+        # # for every order in df_table5_max_dates, get the corresponding create_date from df_table_merged and calculate difference between write_date and create_date
+        # df_table_merged = df_table_merged.merge(df_table5_max_dates, on='sale_order', how='left')
+        # df_table_merged['time_to_pick'] = df_table_merged['write_date'] - df_table_merged['create_date']
 
         #         print data in all the columns of df_table_merged
-        df_table_merged = df_table_merged[['sale_order', 'time_to_deliver', 'time_to_create_delivery_order', 'time_to_pick']]
+        # df_table_merged = df_table_merged[['sale_order', 'time_to_deliver', 'time_to_create_delivery_order', 'time_to_pick']]
+        df_table_merged = df_table_merged[['sale_order', 'time_to_deliver']]
         # print(df_table_merged)
 
-        # create a view from df_table_merged
-        # df_table_merged.to_sql('sale_order_table_report', cursor=self._cr, index=False, if_exists='replace')
-        # create a table using self._cr.execute and push df_table_merged to that table
-        # self._cr.execute("""CREATE TABLE order_tracking_new (
-        #         order_id varchar,
-        #         time_to_deliver varchar,
-        #         time_to_create_delivery_order varchar,
-        #         time_to_pick varchar)""")
+
         if tools.table_exists(self._cr, "order_tracking"):
-            print("table exists")
+            # print("table exists")
             self._cr.execute("""DROP TABLE order_tracking CASCADE""")
 
         tools.create_model_table(self._cr, "order_tracking", None, (("order_id", "varchar", ""),
                                                                     ("time_to_deliver", "varchar", ""),
-                                                                    ("time_to_create_delivery_order", "varchar", ""),
-                                                                    ("time_to_pick", "varchar", "")))
+                                                                    # ("time_to_create_delivery_order", "varchar", ""),
+                                                                    # ("time_to_pick", "varchar", "")))
+                                                                    ))
         for index, row in df_table_merged.iterrows():
-            self._cr.execute("""INSERT INTO order_tracking (order_id, time_to_deliver, time_to_create_delivery_order, time_to_pick) VALUES (%s, %s, %s, %s)""",
-                             (str(row['sale_order']), str(row['time_to_deliver']), str(row['time_to_create_delivery_order']), str(row['time_to_pick'])))
-
+            # self._cr.execute("""INSERT INTO order_tracking (order_id, time_to_deliver, time_to_create_delivery_order, time_to_pick) VALUES (%s, %s, %s, %s)""",
+            #                  (str(row['sale_order']), str(row['time_to_deliver']), str(row['time_to_create_delivery_order']), str(row['time_to_pick'])))
+            self._cr.execute("""INSERT INTO order_tracking (order_id, time_to_deliver) VALUES (%s, %s)""",
+                             (str(row['sale_order']), str(row['time_to_deliver'])))
 
         return df_table_merged
 
 
     @api.model
     def init(self):
-        print("query execution started")
+        # print("query execution started")
         df_final = self.getdata()
         tools.drop_view_if_exists(self._cr, 'open_sale_order_table_report')
-        self._cr.execute("""
-            CREATE OR REPLACE VIEW open_sale_order_table_report AS (
-            SELECT row_number() OVER () as id,
-                so.order_id AS order_id,
-                so.time_to_deliver as time_to_deliver,
-                so.time_to_create_delivery_order as time_to_create_delivery_order,
-                so.time_to_pick as time_to_pick
-            FROM order_tracking so )""")
-        print("query executed")
+        # self._cr.execute("""
+        #     CREATE OR REPLACE VIEW open_sale_order_table_report AS (
+        #     SELECT row_number() OVER () as id,
+        #         so.order_id AS order_id,
+        #         so.time_to_deliver as time_to_deliver,
+        #         so.time_to_create_delivery_order as time_to_create_delivery_order,
+        #         so.time_to_pick as time_to_pick
+        #     FROM order_tracking so )""")
+        self._cr.execute("""CREATE OR REPLACE VIEW open_sale_order_table_report AS (
+             SELECT row_number() OVER () as id,
+                 so.order_id AS order_id,
+                 so.time_to_deliver as time_to_deliver
+             FROM order_tracking so )""")
+        # print("query executed")
 
         # print(df_final)
 
 
 
     def triggerllm(self, context=None):
-        print(self.env.context)
+        # print(self.env.context)
         active_index_ids = self.env.context['active_ids']
-        print(active_index_ids)
+        # print(active_index_ids)
 
         self._cr.execute("""SELECT order_id FROM order_tracking where id in %s""", (tuple(active_index_ids),))
         result = self._cr.fetchall()
         order_ids = [row[0] for row in result]
-        print(order_ids)
+        # print(order_ids)
         # order_ids = [order_ids]
         result_dict = {}
         for order_id in order_ids:
@@ -260,8 +259,8 @@ class OpenSaleOrderView(models.Model):
             columns = [desc[0] for desc in self._cr.description]
             df_sale_order = pd.DataFrame(result, columns=columns)
 
-            # strip the time from all the datetime columns. These columns are in string format so convert them to string first
-            # convert the datetime columns to strings
+            # strip the time from all the datetime columns. These columns are in string format so convert them to
+            # string first convert the datetime columns to strings
             df_sale_order['ordered_date'] = df_sale_order['ordered_date'].astype(str)
             df_sale_order['ordered_date'] = df_sale_order['ordered_date'].str[:10]
             # df_sale_order['ordered_date'] = df_sale_order['ordered_date'].dt.date
@@ -272,7 +271,11 @@ class OpenSaleOrderView(models.Model):
 
 
             # get ordered_products table
-            self._cr.execute("""SELECT sale_order, product_id, ordered_quantity FROM ordered_products where sale_order = %s""", (order_id,))
+            self._cr.execute("""SELECT sale_order, 
+                                        product_id, 
+                                        ordered_quantity 
+                                FROM ordered_products where sale_order = %s""",
+                             (order_id,))
             result = self._cr.fetchall()
             columns = [desc[0] for desc in self._cr.description]
             df_ordered_products = pd.DataFrame(result, columns=columns)
@@ -346,7 +349,7 @@ class OpenSaleOrderView(models.Model):
             # payload for slack webhook endpoint to send messages to a channel
             slack_data = {'text': response_palm}
 
-            print(slack_data)
+            # print(slack_data)
             # print(response_llama.text)
             # print(type(slack_data))
             # print(str(response_llama.text))

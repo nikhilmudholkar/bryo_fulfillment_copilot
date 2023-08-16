@@ -24,8 +24,8 @@
                     </header>
                     <field name="order_id"></field>
                     <field name="time_to_deliver"></field>
-                    <field name="time_to_create_delivery_order"></field>
-                    <field name="time_to_pick"></field>
+<!--                    <field name="time_to_create_delivery_order"></field>-->
+<!--                    <field name="time_to_pick"></field>-->
 <!--                    <button name="triggerllm" string="Get AI recommendations" type="object" class="btn_primary"/>-->
                 </tree>
         </field>

@@ -35,7 +35,7 @@ class FulfillmentView(models.Model):
         # print(df_table)
 
         if tools.table_exists(self._cr, "fulfillment"):
-            print("table fulfillment exists")
+            # print("table fulfillment exists")
             self._cr.execute("""DROP TABLE fulfillment CASCADE""")
 
         tools.create_model_table(self._cr, "fulfillment", None, (("sale_order", "varchar", ""),
@@ -46,7 +46,7 @@ class FulfillmentView(models.Model):
                                                                   ("scheduled_date", "varchar", ""),
                                                                   ("delivered_date", "varchar", ""),
                                                                   ("delivery_priority", "varchar", "")))
-        print("table stock_levels created")
+        # print("table stock_levels created")
 
         for index, row in df_table.iterrows():
             self._cr.execute("""INSERT INTO fulfillment (sale_order, delivery_id, delivery_state, committed_date, scheduled_date, delivered_date, delivery_priority) 
@@ -111,6 +111,6 @@ class FulfillmentView(models.Model):
         # print(self.env['mail.channel'].search([('name', '=', "Bryo copilot suggestions")]).id)
         if self.env['mail.channel'].search([('name', '=', "Bryo copilot suggestions")]).id:
             channel_id = self.env['mail.channel'].search([('name', '=', "Bryo copilot suggestions")]).id
-            print(channel_id)
+            # print(channel_id)
             self.env['mail.channel'].browse(channel_id).message_post(body=message, message_type='comment')
 

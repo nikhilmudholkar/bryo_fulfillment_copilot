@@ -75,7 +75,7 @@ class StockMovementsView(models.Model):
         # print(df_table)
 
         if tools.table_exists(self._cr, "stock_movements"):
-            print("table stock_movements exists")
+            # print("table stock_movements exists")
             self._cr.execute("""DROP TABLE stock_movements CASCADE""")
 
         tools.create_model_table(self._cr, "stock_movements", None, (("sale_order", "varchar", ""),

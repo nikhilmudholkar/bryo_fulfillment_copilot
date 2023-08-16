@@ -58,7 +58,7 @@ class BackOrdersView(models.Model):
         # print(df_table)
 
         if tools.table_exists(self._cr, "back_orders"):
-            print("table back_orders exists")
+            # print("table back_orders exists")
             self._cr.execute("""DROP TABLE back_orders CASCADE""")
 
         tools.create_model_table(self._cr, "back_orders", None, (("sale_order", "varchar", ""),
