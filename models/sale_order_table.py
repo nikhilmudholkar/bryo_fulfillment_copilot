@@ -318,7 +318,7 @@ class OpenSaleOrderView(models.Model):
 
 
             # get back_orders table
-            self._cr.execute("""SELECT sale_order, backorder_id, delivery_id from back_orders where sale_order = %s""", (order_id,))
+            self._cr.execute("""SELECT sale_order, backorder_id, delivery_id, delivered_date from back_orders where sale_order = %s""", (order_id,))
             result = self._cr.fetchall()
             columns = [desc[0] for desc in self._cr.description]
             df_back_orders = pd.DataFrame(result, columns=columns)

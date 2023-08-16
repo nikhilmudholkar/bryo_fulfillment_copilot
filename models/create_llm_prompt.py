@@ -73,13 +73,13 @@ def create_llm_message(df_sale_order, df_ordered_products, df_fulfillment, df_st
     message_string += df_sale_order_string + "\n"
     message_string += "2. <ordered product> table:\n"
     message_string += df_ordered_products_string + "\n"
-    message_string += "3. <fulfillment order> table:\n"
+    message_string += "3. <delivery order> table:\n"
     message_string += df_fulfillment_string + "\n"
-    message_string += "4. <stock move order> table:\n"
+    message_string += "4. <stock picking order> table:\n"
     message_string += df_stock_movements_string + "\n"
-    message_string += "5. <back order> table:\n"
+    message_string += "5. <backorder> table:\n"
     message_string += df_back_orders_string + "\n"
-    # print(message_string)
+    print(message_string)
 
     return message_string
 
